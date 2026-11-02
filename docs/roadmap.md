@@ -30,15 +30,17 @@
       после разбора удалить
 - [x] Станция: замерить через `pipeline_debug` против пайплайна «OpenAI» (2026-11-02, [stt-benchmark.md](stt-benchmark.md):
       после конца речи 0,73 с против 1,43 с по медиане, точность наравне)
-- [ ] Начало звука в адаптере ha-yandex-station: теряется начало быстрой команды (вероятно, в буфере до
-      `SpotterEnd`), хвост wake word с паузой не всегда режется — записать звук до/после `SpotterEnd`
+- [x] Начало звука (хвост wake word, потерянное начало быстрой команды) — задача адаптера, не STT: перенесено в
+      roadmap yandex-quasar, раздел «Начало звука команды: wake word и SpotterEnd»
 - [ ] Подобрать endpoint-параметры: не обрывает ли фразы на паузах («включи… свет на кухне»)
 - [ ] Решить про `prefers_auto_gain_enabled` / `prefers_noise_reduction_enabled`
 
 ## 3. Поставка
 
 - [ ] Dockerfile, multi-arch образ в GHCR
-- [ ] Приложение HA: `repository.yaml`, `config.yaml` с опциями и Wyoming discovery
+- [ ] Приложение HA: `repository.yaml`, `wyoming_soniox_app/` (`config.yaml` с опциями, Wyoming discovery через
+      `bashio::discovery`, сборка на HA из локальных исходников или git-тега `v<version>`). 2026-11-02: собрано и
+      установлено на HA как `local_wyoming_soniox`, ждёт API-ключ и переключения пайплайна
 - [ ] CI: pytest, сборка образа по тегу, линт приложения
 - [ ] README на английском: приложение / docker / pip, настройка пайплайна
 

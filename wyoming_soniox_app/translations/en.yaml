@@ -1,0 +1,36 @@
+configuration:
+  api_key:
+    name: Soniox API key
+    description: Create one at https://console.soniox.com.
+  language:
+    name: Language
+    description: Used when the client does not send a supported language (Home Assistant always sends the pipeline language).
+  model:
+    name: Model
+    description: Soniox real-time model.
+  language_hints_strict:
+    name: Strict language
+    description: Recognize only the requested language.
+  context_terms:
+    name: Context terms
+    description: Names of devices, rooms and other words to recognize better.
+  context_text:
+    name: Context text
+    description: Free-form context for recognition.
+  endpoint_latency_adjustment_level:
+    name: End of speech speed (0-3)
+    description: Higher ends the utterance sooner after you stop speaking, at a slightly higher risk of cutting a pause.
+  endpoint_sensitivity:
+    name: End of speech sensitivity (-1..1)
+    description: Higher detects the end of speech more eagerly.
+  max_endpoint_delay_ms:
+    name: Max end of speech delay (ms)
+    description: Longest wait after speech before the utterance ends (500-3000).
+  max_utterance_s:
+    name: Max utterance (s)
+    description: Safety limit for one utterance.
+  wake_words:
+    name: Wake words to remove
+    description: Only for satellites that send audio including the wake word; it is cut from the start of the text.
+  debug_logging:
+    name: Debug logging

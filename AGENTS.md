@@ -29,7 +29,7 @@ MVP-сервер готов и проверен против настоящег�
 | `scripts/transcribe.py` | ручная проверка: WAV → сервер в реальном темпе, печатает задержку |
 | `scripts/ha_ws.py` | одна команда WebSocket API HA (пайплайны, `pipeline_debug`); токен из `main-ha.env` |
 | `Dockerfile` | multi-arch образ (amd64, aarch64) в GHCR |
-| `repository.yaml` + `wyoming_soniox_app/` | приложение (бывший add-on) для магазина Home Assistant |
+| `repository.yaml` + `wyoming_soniox_app/` | приложение (бывший add-on) для магазина Home Assistant; локальная установка — ниже |
 | `.github/workflows/` | тесты, сборка образа, линт приложения |
 
 ## Рабочее окружение
@@ -46,6 +46,11 @@ MVP-сервер готов и проверен против настоящег�
 `uv run --env-file .env wyoming-soniox --uri tcp://127.0.0.1:10300 --debug`,
 `uv run python scripts/transcribe.py speech.wav` (WAV 16 кГц моно; русская фраза — `say -v Milena -o x.aiff "…"` +
 `afconvert -f WAVE -d LEI16@16000 -c 1 x.aiff x.wav`; файлы держать вне репозитория).
+
+Приложение на HA (dev): `STAGE=$(wyoming_soniox_app/build.sh)`, затем
+`COPYFILE_DISABLE=1 tar -C "$(dirname "$STAGE")" -cf - wyoming_soniox | ssh ha 'rm -rf /local_apps/wyoming_soniox && tar -C /local_apps -xf -'`
+и `ha store reload` + `ha apps install|update local_wyoming_soniox` (для update — новая версия в `config.yaml`;
+`store reload` иногда отваливается по таймауту — повторить). Ключ Soniox вводит владелец в опциях приложения.
 
 Ограничения: HA на Raspberry Pi 5 — тяжёлые локальные модели не предлагать.
 Перезапуск HA касается живого дома: делать осознанно и сообщать.
