@@ -43,6 +43,7 @@ class SttSession:
         self._final_tokens: list[str] = []
         self._finalize_requested = False
         self._audio_bytes = 0
+        self._speech_end_ms = 0
         self._started = time.monotonic()
         self.result: asyncio.Future[str] = asyncio.get_running_loop().create_future()
         self._task = asyncio.create_task(self._run(), name="soniox stt session")
@@ -143,6 +144,8 @@ class SttSession:
                         self._set_result(text)
                         return
                     self._final_tokens.append(text)
+                    if text.strip() and "end_ms" in token:
+                        self._speech_end_ms = token["end_ms"]
                 if data.get("finished"):
                     self._set_result("finished")
                     return
@@ -153,13 +156,18 @@ class SttSession:
     def _set_result(self, reason: str) -> None:
         if self.result.done():
             return
-        _LOGGER.debug(
-            "Utterance ended by %s in %.3f s, after %.2f s of audio: %r",
+        # Audio arrives in real time, so audio received minus the end of the last word
+        # approximates the delay between the end of speech and the result.
+        audio_s = self._audio_bytes / BYTES_PER_SECOND
+        speech_end_s = self._speech_end_ms / 1000
+        _LOGGER.info(
+            "Utterance ended by %s: last word ended at %.2f s, result at %.2f s of audio (+%.2f s)",
             reason,
-            time.monotonic() - self._started,
-            self._audio_bytes / BYTES_PER_SECOND,
-            self.text,
+            speech_end_s,
+            audio_s,
+            audio_s - speech_end_s,
         )
+        _LOGGER.debug("Text: %r", self.text)
         self.result.set_result(self.text)
 
     def _set_error(self, err: SonioxError) -> None:

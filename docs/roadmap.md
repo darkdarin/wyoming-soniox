@@ -19,7 +19,10 @@
 
 ## 2. Живая проверка
 
-- [ ] Запустить локально на Mac, подключить к HA вручную (интеграция Wyoming → host:port), пайплайн с Soniox STT
+- [x] Запустить локально на Mac, подключить к HA вручную (интеграция Wyoming → host:port), пайплайн с Soniox STT
+      (2026-11-02: сервер на Mac `192.168.1.132:10300`, запись Wyoming «soniox» → `stt.soniox`; в пайплайне
+      «OpenAI» STT заменён на `stt.soniox`, язык `ru`. Откат: `stt_engine: stt.openai_stt`, `stt_language: ru-RU`
+      через `assist_pipeline/pipeline/update`)
 - [ ] Станция: замерить через `pipeline_debug` против пайплайна «OpenAI» (время от конца речи до `STT_END`)
 - [ ] Подобрать endpoint-параметры: не обрывает ли фразы на паузах («включи… свет на кухне»)
 - [ ] Решить про `prefers_auto_gain_enabled` / `prefers_noise_reduction_enabled`

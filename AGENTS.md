@@ -27,6 +27,7 @@ MVP-сервер готов и проверен против настоящег�
 | `src/wyoming_soniox/` | Python-пакет: Wyoming-сервер ↔ Soniox WebSocket (устройство — [architecture.md](docs/architecture.md)) |
 | `tests/` | pytest, Soniox подменяется фейковым WebSocket-сервером |
 | `scripts/transcribe.py` | ручная проверка: WAV → сервер в реальном темпе, печатает задержку |
+| `scripts/ha_ws.py` | одна команда WebSocket API HA (пайплайны, `pipeline_debug`); токен из `main-ha.env` |
 | `Dockerfile` | multi-arch образ (amd64, aarch64) в GHCR |
 | `repository.yaml` + `wyoming_soniox_app/` | приложение (бывший add-on) для магазина Home Assistant |
 | `.github/workflows/` | тесты, сборка образа, линт приложения |
