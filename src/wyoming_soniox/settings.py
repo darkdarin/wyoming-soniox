@@ -27,6 +27,15 @@ class SttSettings:
     endpoint_latency_adjustment_level: int = 2
     endpoint_sensitivity: float = 0.3
     max_endpoint_delay_ms: int = 1500
+    wake_words: list[str] = field(default_factory=list)
+    """Wake word phrases to cut from the start of the transcript, with anything before them.
+
+    For satellites that send the buffered audio including the wake word.
+    """
+
+    wake_word_window_ms: int = 3000
+    """The wake word is only looked for among words starting this early in the audio."""
+
     max_utterance_s: float = 15.0
     """Safety limit: finalize the utterance if Soniox has not detected its end by then."""
 

@@ -208,3 +208,26 @@ async def test_two_transcriptions_on_one_connection(
         await start(client)
         event = await read_result(client)
         assert Transcript.from_event(event).text == "Раз"
+
+
+@pytest.fixture
+def wake_word(stt_settings: SttSettings) -> SttSettings:
+    stt_settings.wake_words = ["Алиса"]
+    return stt_settings
+
+
+@pytest.mark.usefixtures("wake_word")
+async def test_endpoint_after_wake_word_keeps_listening(
+    client: AsyncTcpClient, soniox: FakeSoniox
+) -> None:
+    async def behavior(fake: FakeSoniox, ws: ServerConnection) -> None:
+        await ws.send(tokens(("Алиса", True), (".", True), ("<end>", True)))
+        await ws.send(tokens((" Включи", True), (" свет.", True), ("<end>", True)))
+        await fake.receive_until(ws, lambda _: False)
+
+    soniox.behavior = behavior
+    await start(client)
+
+    event = await read_result(client)
+    assert Transcript.from_event(event).text == "Включи свет."
+    assert "Алиса" in soniox.config["context"]["terms"]

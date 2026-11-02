@@ -82,6 +82,20 @@ def parse_args(argv: list[str] | None = None) -> Settings:
     )
     parser.add_argument("--endpoint-sensitivity", type=float, default=defaults.endpoint_sensitivity)
     parser.add_argument("--max-endpoint-delay-ms", type=int, default=defaults.max_endpoint_delay_ms)
+    parser.add_argument(
+        "--wake-word",
+        dest="wake_words",
+        action="append",
+        default=[],
+        help="Wake word to cut from the start of the transcript, with anything before it; "
+        "for satellites that send the audio including the wake word (repeatable)",
+    )
+    parser.add_argument(
+        "--wake-word-window-ms",
+        type=int,
+        default=defaults.wake_word_window_ms,
+        help="Only look for the wake word among words starting this early in the audio",
+    )
     parser.add_argument("--max-utterance-s", type=float, default=defaults.max_utterance_s)
     parser.add_argument("--debug", action="store_true", help="Log DEBUG messages")
     parser.add_argument("--version", action="version", version=__version__)
@@ -109,6 +123,8 @@ def parse_args(argv: list[str] | None = None) -> Settings:
             endpoint_latency_adjustment_level=args.endpoint_latency_adjustment_level,
             endpoint_sensitivity=args.endpoint_sensitivity,
             max_endpoint_delay_ms=args.max_endpoint_delay_ms,
+            wake_words=args.wake_words,
+            wake_word_window_ms=args.wake_word_window_ms,
             max_utterance_s=args.max_utterance_s,
         ),
     )

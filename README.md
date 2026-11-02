@@ -33,6 +33,8 @@ Soniox as speech-to-text in your voice assistant.
 | `--endpoint-latency-adjustment-level` | `2` | 0–3, higher ends utterances faster |
 | `--endpoint-sensitivity` | `0.3` | -1.0…1.0 |
 | `--max-endpoint-delay-ms` | `1500` | 500–3000 |
+| `--wake-word` | | Cut this wake word (and anything before it) from the start of the transcript, for satellites that send audio including the wake word. Repeatable |
+| `--wake-word-window-ms` | `3000` | Only look for the wake word among words starting this early |
 | `--max-utterance-s` | `15` | Safety limit for one utterance |
 | `--debug` | | Debug logging |
 
