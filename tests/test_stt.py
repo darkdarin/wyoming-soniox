@@ -247,6 +247,7 @@ async def test_debug_audio_is_saved(
     await send_chunks(client, 2)
     await client.write_event(AudioStop().event())
     await read_result(client)
+    await client.disconnect()  # Home Assistant disconnects right after the transcript
 
     async with asyncio.timeout(5):
         while not list(tmp_path.glob("*.wav")):  # noqa: ASYNC110 - waiting for a file

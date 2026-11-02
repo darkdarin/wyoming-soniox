@@ -102,13 +102,14 @@ class SttSession:
 
     async def close(self) -> None:
         """Stop the session and close the connection."""
+        # Before any await: the caller may be cancelled when the client disconnects.
+        if self._debug_audio:
+            self._save_debug_audio()
         if not self._task.done():
             self._task.cancel()
         await asyncio.gather(self._task, return_exceptions=True)
         if not self.result.done():
             self.result.cancel()
-        if self._debug_audio:
-            self._save_debug_audio()
 
     def _save_debug_audio(self) -> None:
         assert self._debug_audio is not None
