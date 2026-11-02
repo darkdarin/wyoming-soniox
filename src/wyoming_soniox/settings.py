@@ -41,6 +41,9 @@ class SttSettings:
 
     url: str = STT_URL
 
+    debug_audio_dir: str = ""
+    """Save the audio of each session as WAV here (debugging only)."""
+
 
 @dataclass
 class Settings:

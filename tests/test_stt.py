@@ -231,3 +231,25 @@ async def test_endpoint_after_wake_word_keeps_listening(
     event = await read_result(client)
     assert Transcript.from_event(event).text == "Включи свет."
     assert "Алиса" in soniox.config["context"]["terms"]
+
+
+async def test_debug_audio_is_saved(
+    stt_settings: SttSettings, tmp_path, client: AsyncTcpClient, soniox: FakeSoniox
+) -> None:
+    async def behavior(fake: FakeSoniox, ws: ServerConnection) -> None:
+        await fake.receive_until(ws, lambda m: m == {"type": "finalize"})
+        await ws.send(tokens(("Да", True), ("<fin>", True)))
+        await fake.receive_until(ws, lambda _: False)
+
+    soniox.behavior = behavior
+    stt_settings.debug_audio_dir = str(tmp_path)
+    await start(client)
+    await send_chunks(client, 2)
+    await client.write_event(AudioStop().event())
+    await read_result(client)
+
+    async with asyncio.timeout(5):
+        while not list(tmp_path.glob("*.wav")):  # noqa: ASYNC110 - waiting for a file
+            await asyncio.sleep(0.01)
+    [path] = tmp_path.glob("*.wav")
+    assert path.stat().st_size == 44 + 2 * len(CHUNK)

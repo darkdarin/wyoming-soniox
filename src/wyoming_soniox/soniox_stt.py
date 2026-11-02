@@ -5,6 +5,9 @@ import bisect
 import json
 import logging
 import time
+import wave
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from websockets.asyncio.client import ClientConnection, connect
@@ -51,6 +54,7 @@ class SttSession:
         self._chunk_ends: list[int] = []
         self._chunk_times: list[float] = []
         self._speech_end_ms = 0
+        self._debug_audio = bytearray() if settings.debug_audio_dir else None
         self._started = time.monotonic()
         self.result: asyncio.Future[str] = asyncio.get_running_loop().create_future()
         self._task = asyncio.create_task(self._run(), name="soniox stt session")
@@ -86,6 +90,8 @@ class SttSession:
             self._audio_bytes += len(audio)
             self._chunk_ends.append(self._audio_bytes)
             self._chunk_times.append(time.monotonic())
+            if self._debug_audio is not None:
+                self._debug_audio.extend(audio)
             self._queue.put_nowait(audio)
 
     def finalize(self) -> None:
@@ -101,6 +107,21 @@ class SttSession:
         await asyncio.gather(self._task, return_exceptions=True)
         if not self.result.done():
             self.result.cancel()
+        if self._debug_audio:
+            self._save_debug_audio()
+
+    def _save_debug_audio(self) -> None:
+        assert self._debug_audio is not None
+        directory = Path(self._settings.debug_audio_dir)
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / f"{datetime.now():%Y%m%d-%H%M%S-%f}.wav"
+        with wave.open(str(path), "wb") as wav:
+            wav.setnchannels(1)
+            wav.setsampwidth(2)
+            wav.setframerate(16000)
+            wav.writeframes(bytes(self._debug_audio))
+        self._debug_audio = None
+        _LOGGER.debug("Saved session audio to %s", path)
 
     def _config(self) -> dict[str, Any]:
         s = self._settings

@@ -98,6 +98,9 @@ def parse_args(argv: list[str] | None = None) -> Settings:
     )
     parser.add_argument("--max-utterance-s", type=float, default=defaults.max_utterance_s)
     parser.add_argument("--debug", action="store_true", help="Log DEBUG messages")
+    parser.add_argument(
+        "--debug-audio-dir", default="", help="Save the audio of each session as WAV here"
+    )
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args(argv)
 
@@ -126,6 +129,7 @@ def parse_args(argv: list[str] | None = None) -> Settings:
             wake_words=args.wake_words,
             wake_word_window_ms=args.wake_word_window_ms,
             max_utterance_s=args.max_utterance_s,
+            debug_audio_dir=args.debug_audio_dir,
         ),
     )
 

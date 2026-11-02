@@ -37,6 +37,7 @@ Soniox as speech-to-text in your voice assistant.
 | `--wake-word-window-ms` | `3000` | Only look for the wake word among words starting this early |
 | `--max-utterance-s` | `15` | Safety limit for one utterance |
 | `--debug` | | Debug logging |
+| `--debug-audio-dir` | | Save the audio of each session as WAV (debugging only) |
 
 ## Development
 
