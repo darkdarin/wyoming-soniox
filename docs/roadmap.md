@@ -1,0 +1,40 @@
+# Roadmap
+
+## 0. Подготовка
+
+- [x] Исследование STT, выбор Soniox, решения по архитектуре и репозиторию (2026-11-02)
+- [x] Репозиторий `darkdarin/wyoming-soniox`; `git init`, первый коммит с документацией (2026-11-02)
+- [x] API-ключ Soniox для живых тестов — в `.env` (2026-11-02)
+
+## 1. MVP-сервер
+
+- [ ] `pyproject.toml` (uv), пакет `wyoming_soniox`, CLI: `--uri tcp://0.0.0.0:10300`, `--api-key`/env, опции
+      из [architecture.md](architecture.md)
+- [ ] Wyoming: `describe` → `info` (`AsrProgram`, `requires_external_vad=False`, языки Soniox)
+- [ ] Сессия: `transcribe` → WS Soniox → чанки → `<end>` → `transcript`; `audio-stop` → `finalize` → `<fin>`
+- [ ] Таймауты, ошибки Soniox → Wyoming `error`, логи с `request_id`
+- [ ] Тесты с фейковым Soniox-сервером (endpoint, finalize, ошибка, обрыв, клиент закрыл раньше)
+
+## 2. Живая проверка
+
+- [ ] Запустить локально на Mac, подключить к HA вручную (интеграция Wyoming → host:port), пайплайн с Soniox STT
+- [ ] Станция: замерить через `pipeline_debug` против пайплайна «OpenAI» (время от конца речи до `STT_END`)
+- [ ] Подобрать endpoint-параметры: не обрывает ли фразы на паузах («включи… свет на кухне»)
+- [ ] Решить про `prefers_auto_gain_enabled` / `prefers_noise_reduction_enabled`
+
+## 3. Поставка
+
+- [ ] Dockerfile, multi-arch образ в GHCR
+- [ ] Приложение HA: `repository.yaml`, `config.yaml` с опциями и Wyoming discovery
+- [ ] CI: pytest, сборка образа по тегу, линт приложения
+- [ ] README на английском: приложение / docker / pip, настройка пайплайна
+
+## Потом
+
+- Тёплое соединение / предварительное открытие сессии (взвесить цену)
+- `transcript-chunk`, когда HA начнёт читать промежуточный текст
+- Публикация в PyPI, анонс на community.home-assistant.io
+- TTS Soniox (`wss://tts-rt.soniox.com/tts-websocket`) в том же сервере: `TtsProgram` в `info`, потоковый
+  `synthesize-start/chunk/stop` от HA → текст в Soniox по мере генерации LLM → `audio-chunk`. Код с первого
+  этапа раскладывать так, чтобы STT и TTS были отдельными обработчиками над общими настройками и клиентом
+  [проверить: цена, русские голоса, модель вне preview]

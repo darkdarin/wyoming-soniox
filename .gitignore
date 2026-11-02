@@ -1,0 +1,16 @@
+# Secrets (Soniox API key etc.)
+.env
+*.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local audio recordings
+*.wav
+*.raw
+
+# Local Claude Code settings
+.claude/settings.local.json
