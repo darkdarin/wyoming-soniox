@@ -1,6 +1,7 @@
 """One streaming recognition session with the Soniox real-time WebSocket API."""
 
 import asyncio
+import bisect
 import json
 import logging
 import time
@@ -43,6 +44,10 @@ class SttSession:
         self._final_tokens: list[str] = []
         self._finalize_requested = False
         self._audio_bytes = 0
+        # Audio offset (bytes) at the end of each received chunk and when it arrived; clients may
+        # send buffered audio faster than real time, so offsets alone do not give wall time.
+        self._chunk_ends: list[int] = []
+        self._chunk_times: list[float] = []
         self._speech_end_ms = 0
         self._started = time.monotonic()
         self.result: asyncio.Future[str] = asyncio.get_running_loop().create_future()
@@ -53,10 +58,20 @@ class SttSession:
         """Final text received so far."""
         return "".join(self._final_tokens).strip()
 
+    def delay_after_speech(self) -> float:
+        """Seconds since the chunk containing the end of the last final word arrived."""
+        offset = self._speech_end_ms * BYTES_PER_SECOND // 1000
+        index = bisect.bisect_left(self._chunk_ends, offset)
+        if index >= len(self._chunk_times):
+            return 0.0
+        return time.monotonic() - self._chunk_times[index]
+
     def send_audio(self, audio: bytes) -> None:
         """Queue raw PCM s16le 16 kHz mono audio."""
         if not self.result.done():
             self._audio_bytes += len(audio)
+            self._chunk_ends.append(self._audio_bytes)
+            self._chunk_times.append(time.monotonic())
             self._queue.put_nowait(audio)
 
     def finalize(self) -> None:
@@ -156,16 +171,13 @@ class SttSession:
     def _set_result(self, reason: str) -> None:
         if self.result.done():
             return
-        # Audio arrives in real time, so audio received minus the end of the last word
-        # approximates the delay between the end of speech and the result.
-        audio_s = self._audio_bytes / BYTES_PER_SECOND
-        speech_end_s = self._speech_end_ms / 1000
         _LOGGER.info(
-            "Utterance ended by %s: last word ended at %.2f s, result at %.2f s of audio (+%.2f s)",
+            "Utterance ended by %s: last word ended at %.2f s of %.2f s audio, "
+            "result %.2f s after that audio arrived",
             reason,
-            speech_end_s,
-            audio_s,
-            audio_s - speech_end_s,
+            self._speech_end_ms / 1000,
+            self._audio_bytes / BYTES_PER_SECOND,
+            self.delay_after_speech(),
         )
         _LOGGER.debug("Text: %r", self.text)
         self.result.set_result(self.text)
