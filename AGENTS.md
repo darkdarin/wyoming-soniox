@@ -41,6 +41,7 @@ MVP-сервер готов и проверен против настоящег�
 | Голосовой клиент для проверки | Яндекс Станция через ha-yandex-station (`ssh alice`) |
 | GitHub | `git@github.com:darkdarin/wyoming-soniox.git`; push по SSH-ключу этого Mac, аккаунт `darkdarin`. `gh` авторизован под другим (рабочим) аккаунтом — для этого репозитория не годится |
 | Soniox API-ключ | локально — `.env` в корне (`SONIOX_API_KEY=...`, gitignored, в чат не выводить); в HA — опция приложения `api_key` |
+| Сервер на HA | приложение `local_wyoming_soniox` (лог: `ssh ha 'ha apps logs local_wyoming_soniox'`), сущность `stt.soniox` в пайплайне «OpenAI». Откат STT: `stt_engine: stt.openai_stt`, `stt_language: ru-RU` |
 
 Команды: `uv run pytest`, `uv run ruff check . && uv run ruff format .`,
 `uv run --env-file .env wyoming-soniox --uri tcp://127.0.0.1:10300 --debug`,

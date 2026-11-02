@@ -20,7 +20,7 @@
 ## 2. Живая проверка
 
 - [x] Запустить локально на Mac, подключить к HA вручную (интеграция Wyoming → host:port), пайплайн с Soniox STT
-      (2026-11-02: сервер на Mac `192.168.1.132:10300`, запись Wyoming «soniox» → `stt.soniox`; в пайплайне
+      (2026-11-02, временно, заменено приложением: сервер на Mac `192.168.1.132:10300`, запись Wyoming «soniox» → `stt.soniox`; в пайплайне
       «OpenAI» STT заменён на `stt.soniox`, язык `ru`. Откат: `stt_engine: stt.openai_stt`, `stt_language: ru-RU`
       через `assist_pipeline/pipeline/update`)
 - [x] Wake word в звуке (2026-11-02): Станция не присылает слово «Алиса», только иногда хвост «-са». Идея
@@ -40,7 +40,8 @@
 - [ ] Dockerfile, multi-arch образ в GHCR
 - [ ] Приложение HA: `repository.yaml`, `wyoming_soniox_app/` (`config.yaml` с опциями, Wyoming discovery через
       `bashio::discovery`, сборка на HA из локальных исходников или git-тега `v<version>`). 2026-11-02: собрано и
-      установлено на HA как `local_wyoming_soniox`, ждёт API-ключ и переключения пайплайна
+      установлено на HA как `local_wyoming_soniox`, работает: discovery подтверждён, сущность `stt.soniox`
+      (пайплайн «OpenAI»), watchdog включён, сервер на Mac и ручная запись Wyoming на Mac удалены
 - [ ] CI: pytest, сборка образа по тегу, линт приложения
 - [ ] README на английском: приложение / docker / pip, настройка пайплайна
 
