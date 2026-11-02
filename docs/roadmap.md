@@ -23,9 +23,11 @@
       (2026-11-02: сервер на Mac `192.168.1.132:10300`, запись Wyoming «soniox» → `stt.soniox`; в пайплайне
       «OpenAI» STT заменён на `stt.soniox`, язык `ru`. Откат: `stt_engine: stt.openai_stt`, `stt_language: ru-RU`
       через `assist_pipeline/pipeline/update`)
-- [ ] Wake word в звуке: адаптер ha-yandex-station 0.2.4 с `send_wake_word: true` (пре-ролл целиком), сервер
-      с `--wake-word Алиса` (2026-11-02, включено, ждёт живой проверки). Откат: `send_wake_word: false` в опциях
-      приложения Quasar Adapter (тогда снова режется `spotter_tail_ms`), сервер без `--wake-word`
+- [x] Wake word в звуке (2026-11-02): Станция не присылает слово «Алиса», только иногда хвост «-са». Идея
+      `send_wake_word` + `--wake-word` отброшена. Фиксированная обрезка 300 мс ломала быстрые команды, поэтому
+      адаптер ha-yandex-station 0.2.5 режет хвост, только если за ним пауза. Сервер — без `--wake-word`
+- [ ] Живая проверка адаптера 0.2.5 (обрезка хвоста) на колонке; записи — `--debug-audio-dir /tmp/wsx/audio`,
+      после разбора удалить
 - [ ] Станция: замерить через `pipeline_debug` против пайплайна «OpenAI» (время от конца речи до `STT_END`)
 - [ ] Подобрать endpoint-параметры: не обрывает ли фразы на паузах («включи… свет на кухне»)
 - [ ] Решить про `prefers_auto_gain_enabled` / `prefers_noise_reduction_enabled`
