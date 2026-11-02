@@ -8,12 +8,14 @@
 
 ## 1. MVP-сервер
 
-- [ ] `pyproject.toml` (uv), пакет `wyoming_soniox`, CLI: `--uri tcp://0.0.0.0:10300`, `--api-key`/env, опции
+- [x] `pyproject.toml` (uv), пакет `wyoming_soniox`, CLI: `--uri tcp://0.0.0.0:10300`, `--api-key`/env, опции
       из [architecture.md](architecture.md)
-- [ ] Wyoming: `describe` → `info` (`AsrProgram`, `requires_external_vad=False`, языки Soniox)
-- [ ] Сессия: `transcribe` → WS Soniox → чанки → `<end>` → `transcript`; `audio-stop` → `finalize` → `<fin>`
-- [ ] Таймауты, ошибки Soniox → Wyoming `error`, логи с `request_id`
-- [ ] Тесты с фейковым Soniox-сервером (endpoint, finalize, ошибка, обрыв, клиент закрыл раньше)
+- [x] Wyoming: `describe` → `info` (`AsrProgram`, `requires_external_vad=False`, языки Soniox)
+- [x] Сессия: `transcribe` → WS Soniox → чанки → `<end>` → `transcript`; `audio-stop` → `finalize` → `<fin>`
+- [x] Таймауты, ошибки Soniox → Wyoming `error`, логи с `request_id`
+- [x] Тесты с фейковым Soniox-сервером (endpoint, finalize, ошибка, обрыв, клиент закрыл раньше)
+- [x] Живой прогон на Mac против настоящего Soniox через `scripts/transcribe.py` (2026-11-02, замеры —
+      [soniox-api.md](soniox-api.md))
 
 ## 2. Живая проверка
 
