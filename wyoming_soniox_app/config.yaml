@@ -1,5 +1,5 @@
 name: Wyoming Soniox
-version: "0.2.1"
+version: "0.3.0"
 slug: wyoming_soniox
 description: Fast streaming speech-to-text and text-to-speech with Soniox for Assist (Wyoming protocol)
 url: https://github.com/darkdarin/wyoming-soniox
