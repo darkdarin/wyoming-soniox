@@ -32,5 +32,14 @@ configuration:
   wake_words:
     name: Wake words to remove
     description: Only for satellites that send audio including the wake word; it is cut from the start of the text.
+  tts_voice:
+    name: Default voice
+    description: Voice used when the assistant does not select one (e.g. Maya). Empty — the first Soniox voice. Voices are listed in the assistant's text-to-speech settings.
+  tts_language:
+    name: Speech language
+    description: Language of the synthesized speech. Every voice speaks every language.
+  tts_speed:
+    name: Speech speed
+    description: 0.7 (slower) to 1.3 (faster).
   debug_logging:
     name: Debug logging

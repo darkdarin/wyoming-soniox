@@ -16,6 +16,9 @@ done < <(jq -r '.wake_words[]' /data/options.json)
 if bashio::config.has_value 'context_text'; then
     flags+=(--context-text "$(bashio::config 'context_text')")
 fi
+if bashio::config.has_value 'tts_voice'; then
+    flags+=(--tts-voice "$(bashio::config 'tts_voice')")
+fi
 if bashio::config.false 'language_hints_strict'; then
     flags+=(--no-language-hints-strict)
 fi
@@ -31,6 +34,8 @@ python3 -m wyoming_soniox \
     --endpoint-sensitivity "$(bashio::config 'endpoint_sensitivity')" \
     --max-endpoint-delay-ms "$(bashio::config 'max_endpoint_delay_ms')" \
     --max-utterance-s "$(bashio::config 'max_utterance_s')" \
+    --tts-language "$(bashio::config 'tts_language')" \
+    --tts-speed "$(bashio::config 'tts_speed')" \
     "${flags[@]}" &
 server=$!
 trap 'kill -TERM "${server}"' TERM INT

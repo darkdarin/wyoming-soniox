@@ -11,6 +11,8 @@ STT_LANGUAGES = [
 ]  # fmt: skip
 
 STT_URL = "wss://stt-rt.soniox.com/transcribe-websocket"
+TTS_URL = "wss://tts-rt.soniox.com/tts-websocket"
+TTS_MODELS_URL = "https://api.soniox.com/v1/tts-models"
 
 
 @dataclass
@@ -46,9 +48,30 @@ class SttSettings:
 
 
 @dataclass
+class TtsSettings:
+    """Soniox real-time text-to-speech settings."""
+
+    enabled: bool = True
+    model: str = ""
+    """Empty: the first model reported by Soniox."""
+
+    voice: str = ""
+    """Used when the client does not request a known voice. Empty: the first voice of the model."""
+
+    language: str = "ru"
+    """Language of the synthesized speech: Wyoming clients send a voice name, not a language."""
+
+    speed: float = 1.0
+    sample_rate: int = 24000
+    url: str = TTS_URL
+    models_url: str = TTS_MODELS_URL
+
+
+@dataclass
 class Settings:
     """All server settings."""
 
     api_key: str
     uri: str = "tcp://0.0.0.0:10300"
     stt: SttSettings = field(default_factory=SttSettings)
+    tts: TtsSettings = field(default_factory=TtsSettings)

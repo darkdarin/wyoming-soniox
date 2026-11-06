@@ -1,6 +1,6 @@
 [project]
 name = "wyoming-soniox"
-version = "0.1.0"
+version = "0.2.0"
 description = "Wyoming protocol server for Soniox real-time speech-to-text"
 readme = "README.md"
 license = "MIT"

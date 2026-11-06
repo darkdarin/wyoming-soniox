@@ -6,21 +6,49 @@ import logging
 import os
 from functools import partial
 
-from wyoming.info import AsrModel, AsrProgram, Attribution, Info
+from wyoming.info import AsrModel, AsrProgram, Attribution, Info, TtsProgram, TtsVoice
 from wyoming.server import AsyncServer
 
 from . import __version__
 from .handler import SonioxEventHandler
-from .settings import STT_LANGUAGES, Settings, SttSettings
+from .settings import STT_LANGUAGES, Settings, SttSettings, TtsSettings
+from .soniox_tts import TtsCatalog, keep_catalog_loaded
 
 _LOGGER = logging.getLogger(__name__)
 
 SONIOX_ATTRIBUTION = Attribution(name="Soniox", url="https://soniox.com")
 
 
-def build_info(settings: Settings) -> Info:
-    """Describe the services this server provides."""
+def build_tts_program(catalog: TtsCatalog) -> TtsProgram:
+    """Every Soniox voice speaks every language; the language comes from the settings."""
+    return TtsProgram(
+        name="soniox",
+        description="Soniox real-time text-to-speech",
+        attribution=SONIOX_ATTRIBUTION,
+        installed=True,
+        version=__version__,
+        voices=[
+            TtsVoice(
+                name=voice.id,
+                description=" — ".join(part for part in (voice.id, voice.description) if part),
+                attribution=SONIOX_ATTRIBUTION,
+                installed=True,
+                version=None,
+                languages=catalog.languages,
+            )
+            for voice in catalog.voices
+        ],
+        supports_synthesize_streaming=True,
+    )
+
+
+def build_info(settings: Settings, catalog: TtsCatalog | None = None) -> Info:
+    """Describe the services this server provides; text-to-speech once its catalog is loaded."""
+    tts = []
+    if settings.tts.enabled and catalog is not None and catalog.loaded:
+        tts.append(build_tts_program(catalog))
     return Info(
+        tts=tts,
         asr=[
             AsrProgram(
                 name="soniox",
@@ -40,13 +68,14 @@ def build_info(settings: Settings) -> Info:
                 ],
                 requires_external_vad=False,
             )
-        ]
+        ],
     )
 
 
 def parse_args(argv: list[str] | None = None) -> Settings:
     """Build settings from command line arguments and environment."""
     defaults = SttSettings()
+    tts_defaults = TtsSettings()
     parser = argparse.ArgumentParser(prog="wyoming-soniox", description=__doc__)
     parser.add_argument("--uri", default=Settings.uri, help="unix:// or tcp://")
     parser.add_argument(
@@ -97,6 +126,21 @@ def parse_args(argv: list[str] | None = None) -> Settings:
         help="Only look for the wake word among words starting this early in the audio",
     )
     parser.add_argument("--max-utterance-s", type=float, default=defaults.max_utterance_s)
+    parser.add_argument("--no-tts", dest="tts", action="store_false", help="Disable text-to-speech")
+    parser.add_argument(
+        "--tts-model", default=tts_defaults.model, help="Default: the first model Soniox offers"
+    )
+    parser.add_argument(
+        "--tts-voice",
+        default=tts_defaults.voice,
+        help="Voice used when the client does not request one (default: the first voice)",
+    )
+    parser.add_argument(
+        "--tts-language",
+        default=tts_defaults.language,
+        help="Language of the synthesized speech",
+    )
+    parser.add_argument("--tts-speed", type=float, default=tts_defaults.speed, help="0.7-1.3")
     parser.add_argument("--debug", action="store_true", help="Log DEBUG messages")
     parser.add_argument(
         "--debug-audio-dir", default="", help="Save the audio of each session as WAV here"
@@ -131,15 +175,35 @@ def parse_args(argv: list[str] | None = None) -> Settings:
             max_utterance_s=args.max_utterance_s,
             debug_audio_dir=args.debug_audio_dir,
         ),
+        tts=TtsSettings(
+            enabled=args.tts,
+            model=args.tts_model,
+            voice=args.tts_voice,
+            language=args.tts_language,
+            speed=args.tts_speed,
+        ),
     )
 
 
 async def run(settings: Settings) -> None:
     """Run the Wyoming server until stopped."""
-    info = build_info(settings)
+    catalog = TtsCatalog()
+    if settings.tts.enabled:
+        loader = asyncio.create_task(keep_catalog_loaded(settings.api_key, settings.tts, catalog))
     server = AsyncServer.from_uri(settings.uri)
     _LOGGER.info("Ready on %s (model %s)", settings.uri, settings.stt.model)
-    await server.run(partial(SonioxEventHandler, settings=settings, info=info))
+    try:
+        await server.run(
+            partial(
+                SonioxEventHandler,
+                settings=settings,
+                info=partial(build_info, settings, catalog),
+                catalog=catalog,
+            )
+        )
+    finally:
+        if settings.tts.enabled:
+            loader.cancel()
 
 
 def main() -> None:

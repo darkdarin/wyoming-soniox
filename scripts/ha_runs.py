@@ -1,7 +1,8 @@
 """Summarize recent Assist pipeline runs from pipeline_debug as TSV.
 
 Usage: uv run --env-file ../ha-yandex-station/main-ha.env scripts/ha_runs.py PIPELINE_ID [SINCE_ISO]
-Columns: start time, STT text, stt-start->stt-end, stt-vad-end->stt-end, stt-end->intent-end (seconds).
+Columns: start time, STT text, then seconds for stt-start->stt-end,
+stt-vad-end->stt-end and stt-end->intent-end.
 """
 
 import asyncio
@@ -48,7 +49,7 @@ async def main() -> None:
                 if event["type"] == "stt-end":
                     text = event["data"]["stt_output"]["text"]
 
-            def span(a: str, b: str) -> str:
+            def span(a: str, b: str, times: dict = times) -> str:
                 return (
                     f"{(times[b] - times[a]).total_seconds():.2f}"
                     if a in times and b in times
