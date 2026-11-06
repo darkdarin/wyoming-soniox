@@ -4,6 +4,21 @@ Each version has two parts. **Server** is wyoming-soniox itself: it runs inside 
 the Docker image, and changes there affect every installation. **App** is the Home Assistant packaging: options,
 installation, discovery. If a part did not change, it says so.
 
+## 0.3.1
+
+### Server
+
+- **Text-to-speech no longer needs the Soniox models API.** Listing voices requires a separate key permission;
+  without it the server now uses the built-in voice list after checking that the key may synthesize speech.
+  Before, text-to-speech stayed unavailable even when the key could synthesize.
+- The default voice is native to the speech language when Soniox offers one (Andrei for Russian) instead of the
+  first voice in the list. Pick another one in the assistant's text-to-speech settings or with `tts_voice`.
+- The default model is `tts-rt-v2`, the current Soniox text-to-speech model.
+
+### App
+
+No changes.
+
 ## 0.3.0
 
 ### Server

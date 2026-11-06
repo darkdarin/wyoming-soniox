@@ -16,7 +16,7 @@ from websockets.asyncio.client import ClientConnection, connect
 from websockets.exceptions import ConnectionClosed
 
 from . import __version__
-from .settings import TtsSettings
+from .settings import STT_LANGUAGES, TtsSettings
 from .soniox_stt import SonioxError
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,6 +24,8 @@ _LOGGER = logging.getLogger(__name__)
 CATALOG_RETRY_S = 300.0
 MAX_TEXT_CHARS = 5000
 _stream_ids = itertools.count(1)
+# Soniox speaks the same 60 languages it recognizes (docs.soniox.com: tts supported languages).
+TTS_LANGUAGES = STT_LANGUAGES
 
 
 @dataclass
@@ -70,29 +72,127 @@ def _fetch_models(api_key: str, url: str) -> list[dict[str, Any]]:
         raise SonioxError(f"HTTP {err.code}: {body}", error_type=str(err.code)) from err
 
 
-async def load_catalog(api_key: str, settings: TtsSettings) -> TtsCatalog:
-    """Ask Soniox for TTS models and pick the model and default voice from the settings."""
+DEFAULT_MODEL = "tts-rt-v2"
+PROBE_TIMEOUT_S = 15.0
+
+# Voices of the Soniox models (docs.soniox.com: get_tts_models), all checked with tts-rt-v2.
+# Used when the models API is not available to the key: it needs a separate permission.
+BUILTIN_VOICES = [
+    TtsVoiceInfo("Maya", "female", "Steady, clear and warm"),
+    TtsVoiceInfo("Daniel", "male", "Rich, steady and reassuring"),
+    TtsVoiceInfo("Noah", "male", "Lively, youthful and upbeat"),
+    TtsVoiceInfo("Nina", "female", "Bright, expressive and friendly"),
+    TtsVoiceInfo("Emma", "female", "Smooth, relaxed and personable"),
+    TtsVoiceInfo("Jack", "male", "Friendly, confident and clear"),
+    TtsVoiceInfo("Adrian", "male", "Deep, focused and authoritative"),
+    TtsVoiceInfo("Claire", "female", "Polished, articulate and refined"),
+    TtsVoiceInfo("Grace", "female", "Gentle, soothing and calm"),
+    TtsVoiceInfo("Owen", "male", "Grounded, even-paced and composed"),
+    TtsVoiceInfo("Mina", "female", "Soft, thoughtful and sincere"),
+    TtsVoiceInfo("Kenji", "male", "Calm, precise and trustworthy"),
+    TtsVoiceInfo("Rafael", "male", "Composed, warm Spanish accent"),
+    TtsVoiceInfo("Mateo", "male", "Youthful, soft Spanish accent"),
+    TtsVoiceInfo("Lucia", "female", "Mature, natural Spanish accent"),
+    TtsVoiceInfo("Sofia", "female", "Friendly, Spanish accent"),
+    TtsVoiceInfo("Oliver", "male", "Refined, smooth British accent"),
+    TtsVoiceInfo("Arthur", "male", "Deep, rich British accent"),
+    TtsVoiceInfo("Isla", "female", "Lively, bright British accent"),
+    TtsVoiceInfo("Victoria", "female", "Poised, refined British accent"),
+    TtsVoiceInfo("Cooper", "male", "Bold, strong Australian accent"),
+    TtsVoiceInfo("Mason", "male", "Relaxed, Australian accent"),
+    TtsVoiceInfo("Ruby", "female", "Confident, Australian accent"),
+    TtsVoiceInfo("Elise", "female", "Warm, Australian accent"),
+    TtsVoiceInfo("Arjun", "male", "Deep, Indian accent"),
+    TtsVoiceInfo("Rohan", "male", "Lively, Indian accent"),
+    TtsVoiceInfo("Priya", "female", "Clear, Indian accent"),
+    TtsVoiceInfo("Meera", "female", "Polished, Indian accent"),
+]
+
+
+def _pick_default_voice(catalog: TtsCatalog, voice: str, language_name: str = "") -> None:
+    """The configured voice; else a voice native to the speech language (its description names the
+    language, e.g. "A neutral Russian male voice"); else the first one."""
+    catalog.default_voice = catalog.voices[0].id
+    if language_name and not voice:
+        native = next(
+            (v for v in catalog.voices if language_name.lower() in v.description.lower()), None
+        )
+        if native is not None:
+            catalog.default_voice = native.id
+    if voice:
+        if any(v.id == voice for v in catalog.voices):
+            catalog.default_voice = voice
+        else:
+            _LOGGER.warning("TTS voice %r is not offered, using %r", voice, catalog.default_voice)
+
+
+async def _catalog_from_api(api_key: str, settings: TtsSettings) -> TtsCatalog:
     models = await asyncio.to_thread(_fetch_models, api_key, settings.models_url)
-    model = next((m for m in models if m["id"] == settings.model), None) if settings.model else None
-    if model is None:
-        if settings.model:
-            _LOGGER.warning(
-                "TTS model %r is not offered, using %r", settings.model, models[0]["id"]
-            )
-        model = models[0]
-    voices = [
-        TtsVoiceInfo(v["id"], v.get("gender", ""), v.get("description", ""))
-        for v in model["voices"]
-    ]
+    by_id = {m["id"]: m for m in models}
+    model = by_id.get(settings.model) or by_id.get(DEFAULT_MODEL) or models[0]
+    if settings.model and settings.model not in by_id:
+        _LOGGER.warning("TTS model %r is not offered, using %r", settings.model, model["id"])
     catalog = TtsCatalog(
         model=model["id"],
         languages=[language["code"] for language in model["languages"]],
-        voices=voices,
+        voices=[
+            TtsVoiceInfo(v["id"], v.get("gender", ""), v.get("description", ""))
+            for v in model["voices"]
+        ],
     )
-    catalog.default_voice = settings.voice if settings.voice else voices[0].id
-    if catalog.resolve_voice(settings.voice or None) != catalog.default_voice:
-        _LOGGER.warning("TTS voice %r is not offered, using %r", settings.voice, voices[0].id)
-        catalog.default_voice = voices[0].id
+    names = {language["code"]: language.get("name", "") for language in model["languages"]}
+    _pick_default_voice(catalog, settings.voice, names.get(settings.language, ""))
+    return catalog
+
+
+async def probe_tts(api_key: str, settings: TtsSettings, model: str, voice: str) -> None:
+    """Open a stream and cancel it before any text: checks the key and the model, costs nothing."""
+    try:
+        async with connect(
+            settings.url,
+            additional_headers={"Authorization": f"Bearer {api_key}"},
+            open_timeout=PROBE_TIMEOUT_S,
+        ) as ws:
+            config = {
+                "stream_id": "probe",
+                "model": model,
+                "language": settings.language,
+                "voice": voice,
+                "audio_format": "pcm_s16le",
+                "sample_rate": settings.sample_rate,
+            }
+            await ws.send(json.dumps(config))
+            await ws.send(json.dumps({"stream_id": "probe", "cancel": True}))
+            async with asyncio.timeout(PROBE_TIMEOUT_S):
+                async for message in ws:
+                    data = json.loads(message)
+                    if "error_type" in data or "error_code" in data:
+                        raise SonioxError(
+                            f"{data.get('error_code')} {data.get('error_type')}: "
+                            f"{data.get('error_message')}",
+                            error_type=str(data.get("error_type") or data.get("error_code")),
+                        )
+                    if data.get("terminated"):
+                        return
+    except SonioxError:
+        raise
+    except Exception as err:  # noqa: BLE001 - rejected handshake, DNS, TLS, timeout, ...
+        raise SonioxError(f"{type(err).__name__}: {err}") from err
+
+
+async def load_catalog(api_key: str, settings: TtsSettings) -> TtsCatalog:
+    """Model, languages and voices from the models API, else built in once a probe passes."""
+    try:
+        return await _catalog_from_api(api_key, settings)
+    except Exception as err:  # noqa: BLE001 - the models API needs its own key permission
+        _LOGGER.info("TTS models API is not available (%s), using the built-in voice list", err)
+    catalog = TtsCatalog(
+        model=settings.model or DEFAULT_MODEL,
+        languages=list(TTS_LANGUAGES),
+        voices=list(BUILTIN_VOICES),
+    )
+    _pick_default_voice(catalog, settings.voice)
+    await probe_tts(api_key, settings, catalog.model, catalog.default_voice)
     return catalog
 
 

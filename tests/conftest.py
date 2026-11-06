@@ -97,6 +97,8 @@ class FakeSonioxTts:
     connections: int = 0
     timeout_after_text: bool = False
     error_type: str = ""
+    config_error_type: str = ""
+    cancels: int = 0
 
     async def handle(self, ws: ServerConnection) -> None:
         self.connections += 1
@@ -108,8 +110,11 @@ class FakeSonioxTts:
                 if "voice" in data:
                     self.configs.append(data)
                     self.texts[stream_id] = ""
+                    if self.config_error_type:
+                        await self._send_error(ws, stream_id, self.config_error_type)
                     continue
                 if data.get("cancel"):
+                    self.cancels += 1
                     await ws.send(json.dumps({"stream_id": stream_id, "terminated": True}))
                     continue
                 self.texts[stream_id] += data.get("text", "")

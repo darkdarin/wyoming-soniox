@@ -92,7 +92,7 @@ App options are on its **Configuration** tab; the same settings are command-line
 | `endpoint_sensitivity` | same | `0.3` | -1…1: higher detects the end of speech more eagerly |
 | `max_endpoint_delay_ms` | same | `1500` | 500–3000: longest wait after speech before the phrase ends |
 | `max_utterance_s` | same | `15` | Safety limit for one phrase |
-| `tts_voice` | `--tts-voice` | first voice | Voice used when the assistant does not select one |
+| `tts_voice` | `--tts-voice` | native voice | Voice used when the assistant does not select one; by default a voice native to `tts_language` (Andrei for Russian) |
 | `tts_language` | `--tts-language` | `ru` | Language of the synthesized speech (see below) |
 | `tts_speed` | `--tts-speed` | `1.0` | 0.7–1.3 |
 | `wake_words` | `--wake-word` | | Only for satellites that send audio including the wake word: cut it from the text |

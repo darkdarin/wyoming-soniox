@@ -34,7 +34,7 @@ configuration:
     description: Only for satellites that send audio including the wake word; it is cut from the start of the text.
   tts_voice:
     name: Default voice
-    description: Voice used when the assistant does not select one (e.g. Maya). Empty — the first Soniox voice. Voices are listed in the assistant's text-to-speech settings.
+    description: Voice used when the assistant does not select one (e.g. Andrei, Vadim, Kirill for Russian). Empty — a voice native to the speech language. All voices are listed in the assistant's text-to-speech settings.
   tts_language:
     name: Speech language
     description: Language of the synthesized speech. Every voice speaks every language.
