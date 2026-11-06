@@ -254,3 +254,32 @@ async def test_debug_audio_is_saved(
             await asyncio.sleep(0.01)
     [path] = tmp_path.glob("*.wav")
     assert path.stat().st_size == 44 + 2 * len(CHUNK)
+
+
+async def test_odd_chunks_are_sent_as_whole_samples(
+    client: AsyncTcpClient, soniox: FakeSoniox
+) -> None:
+    frames: list[int] = []
+
+    async def behavior(fake: FakeSoniox, ws: ServerConnection) -> None:
+        async def record(message: object) -> bool:
+            if isinstance(message, bytes):
+                frames.append(len(message))
+            return message == {"type": "finalize"}
+
+        while not await record(await fake.receive(ws)):
+            pass
+        await ws.send(tokens(("Да", True), ("<fin>", True)))
+        await fake.receive_until(ws, lambda _: False)
+
+    soniox.behavior = behavior
+    await start(client)
+    for size in (1717, 3, 2000):
+        await client.write_event(
+            AudioChunk(rate=16000, width=2, channels=1, audio=bytes(size)).event()
+        )
+    await client.write_event(AudioStop().event())
+
+    await read_result(client)
+    assert all(size % 2 == 0 for size in frames)
+    assert sum(frames) == 3720

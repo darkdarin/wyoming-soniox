@@ -49,6 +49,7 @@ class SttSession:
         self._final_tokens: list[Token] = []
         self._finalize_requested = False
         self._audio_bytes = 0
+        self._odd_byte = b""
         # Audio offset (bytes) at the end of each received chunk and when it arrived; clients may
         # send buffered audio faster than real time, so offsets alone do not give wall time.
         self._chunk_ends: list[int] = []
@@ -87,6 +88,11 @@ class SttSession:
     def send_audio(self, audio: bytes) -> None:
         """Queue raw PCM s16le 16 kHz mono audio."""
         if not self.result.done():
+            # Soniox rejects frames that are not whole samples; clients may split audio anywhere.
+            audio = self._odd_byte + audio
+            audio, self._odd_byte = audio[: len(audio) // 2 * 2], audio[len(audio) // 2 * 2 :]
+            if not audio:
+                return
             self._audio_bytes += len(audio)
             self._chunk_ends.append(self._audio_bytes)
             self._chunk_times.append(time.monotonic())
