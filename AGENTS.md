@@ -56,6 +56,12 @@ Development notes and research live in Notion (workspace darkdarin; pages are in
 it is a local app built by the Supervisor (its `config.yaml` has no `image:`). The Dockerfile installs
 dependencies strictly from `uv.lock`, from PyPI only. Commands are on the Notion page "Development".
 
+The live Home Assistant runs the store app `89e90f00_wyoming_soniox` (hostname `89e90f00-wyoming-soniox`); the
+FlowPilot pipeline of the Station reaches it by the `uri` in its graph, so a hostname change breaks the Station's
+voice. `scripts/ha_ws.py` uses the standard library only: run it with `/usr/bin/python3`
+(`uv run --no-project --python /usr/bin/python3 --env-file ../ha-yandex-station/main-ha.env python scripts/ha_ws.py …`)
+— macOS may block other interpreters from the local network.
+
 Icons: `scripts/draw_logos.py` renders `wyoming_soniox_app/icon.png`, `logo.png` and `assets/*logo.png`.
 
 ## Rules
