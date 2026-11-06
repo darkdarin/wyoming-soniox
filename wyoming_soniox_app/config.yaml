@@ -3,6 +3,9 @@ version: "0.2.1"
 slug: wyoming_soniox
 description: Fast streaming speech-to-text and text-to-speech with Soniox for Assist (Wyoming protocol)
 url: https://github.com/darkdarin/wyoming-soniox
+# Prebuilt multi-arch image published by .github/workflows/release.yml; wyoming_soniox_app/build.sh drops this
+# line for a local app that the Supervisor builds from source.
+image: ghcr.io/darkdarin/wyoming-soniox
 arch:
   - aarch64
   - amd64
