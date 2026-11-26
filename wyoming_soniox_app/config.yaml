@@ -15,7 +15,7 @@ discovery:
 options:
   api_key: ""
   language: ru
-  model: stt-rt-v5
+  model: stt-rt-v6
   language_hints_strict: true
   context_terms: []
   context_text: ""

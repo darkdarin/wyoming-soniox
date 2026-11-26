@@ -14,12 +14,17 @@ STT_URL = "wss://stt-rt.soniox.com/transcribe-websocket"
 TTS_URL = "wss://tts-rt.soniox.com/tts-websocket"
 TTS_MODELS_URL = "https://api.soniox.com/v1/tts-models"
 
+STT_MODEL = "stt-rt-v6"
+# Soniox removes a model on a date (https://docs.soniox.com/stt/models); a setting that still
+# names it goes to its successor, the same API
+REPLACED_STT_MODELS = {"stt-rt-v5": STT_MODEL}
+
 
 @dataclass
 class SttSettings:
     """Soniox real-time speech-to-text settings."""
 
-    model: str = "stt-rt-v5"
+    model: str = STT_MODEL
     language: str = "ru"
     """Used when the client does not send a supported language."""
 
@@ -45,6 +50,9 @@ class SttSettings:
 
     debug_audio_dir: str = ""
     """Save the audio of each session as WAV here (debugging only)."""
+
+    def __post_init__(self) -> None:
+        self.model = REPLACED_STT_MODELS.get(self.model, self.model)
 
 
 @dataclass

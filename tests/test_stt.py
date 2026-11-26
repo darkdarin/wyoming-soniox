@@ -46,8 +46,13 @@ async def test_describe(client: AsyncTcpClient) -> None:
     assert len(info.asr) == 1
     asr = info.asr[0]
     assert asr.requires_external_vad is False
-    assert asr.models[0].name == "stt-rt-v5"
+    assert asr.models[0].name == "stt-rt-v6"
     assert "ru" in asr.models[0].languages
+
+
+def test_a_removed_model_goes_to_its_successor() -> None:
+    assert SttSettings(model="stt-rt-v5").model == "stt-rt-v6"
+    assert SttSettings(model="stt-rt-v6").model == "stt-rt-v6"
 
 
 async def test_endpoint_returns_transcript(client: AsyncTcpClient, soniox: FakeSoniox) -> None:

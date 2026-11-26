@@ -84,7 +84,7 @@ App options are on its **Configuration** tab; the same settings are command-line
 |---|---|---|---|
 | `api_key` | `--api-key` | `$SONIOX_API_KEY` | Soniox API key |
 | `language` | `--language` | `ru` | Speech-to-text language when the client sends none (Home Assistant sends the assistant's language) |
-| `model` | `--model` | `stt-rt-v5` | Soniox real-time speech-to-text model |
+| `model` | `--model` | `stt-rt-v6` | Soniox real-time speech-to-text model |
 | `language_hints_strict` | `--no-language-hints-strict` | on | Recognize only the requested language |
 | `context_terms` | `--context-term` | | Names of devices, rooms and other words to recognize better (repeatable) |
 | `context_text` | `--context-text` | | Free-form context for recognition |
