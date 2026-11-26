@@ -4,6 +4,19 @@ Each version has two parts. **Server** is wyoming-soniox itself: it runs inside 
 the Docker image, and changes there affect every installation. **App** is the Home Assistant packaging: options,
 installation, discovery. If a part did not change, it says so.
 
+## 0.3.2
+
+### Server
+
+- **Speech is recognized with `stt-rt-v6`.** Soniox removes the `stt-rt-v5` models on December 15,
+  2026. The default model is now `stt-rt-v6`, and a setting that still names `stt-rt-v5` uses
+  `stt-rt-v6` too: nothing to change.
+
+### App
+
+- The `model` option defaults to `stt-rt-v6` on new installations. An installation that keeps
+  `stt-rt-v5` in its options gets `stt-rt-v6` from the server, so the option need not be changed.
+
 ## 0.3.1
 
 ### Server
